@@ -43,11 +43,11 @@ def today():
     foods = db.execute("SELECT * FROM food WHERE user_id = ?",session["user_id"])
     summ = [0,0,0,0]
     for food in foods:
-        summ[0] += float(food["energy"])
+        summ[0] += int(float(food["energy"]))
         summ[1] += float(food["protein"])
         summ[2] += float(food["fat"])
         summ[3] += float(food["carbs"])
-    for i in range(4):
+    for i in range(1,4):
         summ[i] = "{:.2f}".format(summ[i])
     return render_template("today.html",foods = foods, summ = summ)
 
@@ -80,6 +80,14 @@ def add_to_list():
     return render_template("add.html",show = True)
 
 
+@app.route("/remove")
+@login_required
+def remove():
+    food = request.args["remove_btn"]
+    db.execute("DELETE FROM food WHERE id = ? AND user_id = ?",food,session["user_id"])
+    return redirect("/today")
+
+
 @app.route("/download")
 @login_required
 def download():
@@ -87,7 +95,7 @@ def download():
     fields = ["description","energy",'protein',"fat","carbs"]
     summ = {"energy" : 0 ,"protein" : 0 , "fat" : 0 , "carbs" : 0 , "description" : "sum"}
     for food in table:
-        summ["energy"] += float(food["energy"])
+        summ["energy"] += int(float(food["energy"]))
         summ["protein"] += float(food["protein"])
         summ["fat"] += float(food["fat"])
         summ["carbs"] += float(food["carbs"])

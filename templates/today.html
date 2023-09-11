@@ -9,7 +9,6 @@
     <table class="table table-hover center">
         <thead>
             <tr>
-                <th></th>
                 <th>Food</th>
                 <th>Energy</th>
                 <th>Protein</th>
@@ -20,17 +19,18 @@
         <tbody>
             {% for food in foods %}
                 <tr>
-                    <th></th>
                     <th>{{ food["description"] }}</th>
                     <th>{{ food["energy"] }}</th>
                     <th>{{ food["protein"] }}</th>
                     <th>{{ food["fat"] }}</th>
                     <th>{{ food["carbs"] }}</th>
+                    <th><form action="/remove" method="get">
+                        <button class="btn btn-primary" name="remove_btn" type="submit" value="{{ food["id"] }}">Remove</button>
+                    </form></th>
                 </tr>
             {% endfor %}
             <tr>
                 <th>Total</th>
-                <th></th>
                 <th>{{ summ[0] }}</th>
                 <th>{{ summ[1] }}</th>
                 <th>{{ summ[2] }}</th>

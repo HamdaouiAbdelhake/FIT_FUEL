@@ -61,7 +61,7 @@
                     <th>{{ food["Total lipid (fat)"] }}g</th>
                     <th>{{ food["Carbohydrate, by difference"] }}g</th>
                     <th><form action="/tolist" method="get">
-                        <button name="add_button" type="submit" value="{{ food["id"] }}/{{ food["name"] }}/{{ food["Energy"] }}/{{ food["Protein"] }}/{{ food["Total lipid (fat)"] }}/{{ food["Carbohydrate, by difference"] }}">Add</button>
+                        <button class="btn btn-primary" name="add_button" type="submit" value="{{ food["id"] }}/{{ food["name"] }}/{{ food["Energy"] }}/{{ food["Protein"] }}/{{ food["Total lipid (fat)"] }}/{{ food["Carbohydrate, by difference"] }}">Add</button>
                     </form></th>
                 </tr>
             {% endfor %}
