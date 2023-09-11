@@ -1,5 +1,5 @@
 # FIT FUEL Web Application
-#### Video Demo:
+#### Video Demo: <https://youtu.be/DcE8WFfknYk>
 #### Description:
 
 **FIT FUEL** is a web application designed to help users track their daily calorie and macronutrient intake. The app leverages the USDA API to provide accurate and up-to-date information about food macros and calories. It includes user registration and login functionality and is built using HTML, JavaScript, CSS, and Python with the Flask framework. Additionally, the app offers features to download data to a CSV file and reset the day's food data for convenient tracking.
