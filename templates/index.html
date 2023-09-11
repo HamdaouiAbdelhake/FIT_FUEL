@@ -5,38 +5,30 @@
 {% endblock %}
 
 {% block main %}
-    <table class="table table-hover center">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Number</th>
-                <th>Price</th>
-                <th>Holding Value</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for stock in owned %}
-                <tr>
-                    <th>{{ stock["stock"] }}</th>
-                    <th>{{ stock["number"] }}</th>
-                    <th>{{ stock["price"] }}</th>
-                    <th>{{ stock["value"] }}</th>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <table class="table table-hover center">
-        <thead>
-            <tr>
-                <th>Cash</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <th>{{ cash }}</th>
-                <th>{{ total }}</th>
-            </tr>
-        </tbody>
-    </table>
+<main class="container">
+    <section class="jumbotron">
+        <h2 class="text-center">Track Your Calories and Macros</h2>
+        <p class="lead text-center">Are you ready to take control of your nutrition? Enough for Today helps you track your daily calorie and macronutrient intake with precision.</p>
+        <a href="/add" class="btn btn-primary btn-lg d-block mx-auto">Get Started</a>
+    </section>
+
+    <section class="row text-center">
+        <div class="col-md-4">
+            <img src="static/calories.png" alt="Calories Icon" class="img-fluid pad">
+            <h3>Calorie Tracking</h3>
+            <p>Monitor your daily calorie intake and stay on track towards your fitness goals.</p>
+        </div>
+        <div class="col-md-4">
+            <img src="static/pie-graph.png" alt="Macros Icon" class="img-fluid pad">
+            <h3>Macro Counting</h3>
+            <p>Track your macros - proteins, carbs, and fats - to ensure a balanced diet.</p>
+        </div>
+        <div class="col-md-4">
+            <img src="static/high-five.png" alt="Easy Icon" class="img-fluid pad">
+            <h3>User Friendly</h3>
+            <p>Easy to use, effective and will help you reach your goals.</p>
+        </div>
+    </section>
+</main>
+
 {% endblock %}

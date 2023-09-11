@@ -1,15 +1,13 @@
-import csv
-import datetime
-import pytz
-import requests
-import subprocess
-import urllib
-import uuid
+import json
 
 from flask import redirect, render_template, session
 from functools import wraps
+from urllib.request import urlopen
+from datetime import datetime
 
 
+KEY = "DVfczk7JSbdPtyOEriIcDRxr6CQOS8PAKaz3Df5Q"
+CATEGORIES = ["American Indian/Alaska Native Foods","Baby Foods","Baked Products","Beef Products","Beverages","","Breakfast Cereals","Cereal Grains and Pasta","Fast Foods","Fats and Oils","Finfish and Shellfish Products","Fruits and Fruit Juices","Lamb, Veal, and Game Products","Legumes and Legume Products","Meals, Entrees, and Side Dishes","Nut and Seed Products","Pork Products","Poultry Products","Restaurant Foods","Sausages and Luncheon Meats","Snacks","Soups, Sausages, and Gravies","Spices and Herbs","Sweets","Vegetables and Vegetable Products"]
 def apology(message, code=400):
     """Render message as an apology to user."""
     def escape(s):
@@ -39,39 +37,24 @@ def login_required(f):
     return decorated_function
 
 
-def lookup(symbol):
-    """Look up quote for symbol."""
-    # Prepare API request
-    symbol = symbol.upper()
-    end = datetime.datetime.now(pytz.timezone("US/Eastern"))
-    start = end - datetime.timedelta(days=7)
+def lookup(query , category_index):
+    query = query.replace(" " , "%20")
+    category = CATEGORIES[category_index - 1]
+    category = category.replace(" " , "%20")
+    url = f"https://api.nal.usda.gov/fdc/v1/foods/search?api_key={KEY}&query={query}&dataType=SR%20Legacy&requireAllWords=true&foodCategory={category}"
+    response = urlopen(url)
 
-    # Yahoo Finance API
-    url = (
-        f"https://query1.finance.yahoo.com/v7/finance/download/{urllib.parse.quote_plus(symbol)}"
-        f"?period1={int(start.timestamp())}"
-        f"&period2={int(end.timestamp())}"
-        f"&interval=1d&events=history&includeAdjustedClose=true"
-    )
-
-    # Query API
-    try:
-        response = requests.get(url, cookies={"session": str(uuid.uuid4())}, headers={"User-Agent": "python-requests", "Accept": "*/*"})
-        response.raise_for_status()
-
-        # CSV header: Date,Open,High,Low,Close,Adj Close,Volume
-        quotes = list(csv.DictReader(response.content.decode("utf-8").splitlines()))
-        quotes.reverse()
-        price = round(float(quotes[0]["Adj Close"]), 2)
-        return {
-            "name": symbol,
-            "price": price,
-            "symbol": symbol
-        }
-    except (requests.RequestException, ValueError, KeyError, IndexError):
-        return None
-
-
-def usd(value):
-    """Format value as USD."""
-    return f"${value:,.2f}"
+    # storing the JSON response
+    # from url in data
+    data_json = json.loads(response.read())
+    if data_json["totalHits"] == 0:
+        return False
+    result = []
+    # print the json response
+    for i in data_json["foods"]:
+        element = {"name" : i["description"],"id" : i["fdcId"]}
+        for j in i["foodNutrients"]:
+            if j["nutrientName"] in ["Energy","Protein","Total lipid (fat)","Carbohydrate, by difference"]:
+                element[j["nutrientName"]] = j["value"]
+        result.append(element)
+    return result

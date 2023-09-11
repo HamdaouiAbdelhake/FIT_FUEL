@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Add Food
+{% endblock %}
+
+{% block main %}
+    {% if show == True %}
+    <div class="pad">
+        <button type="button" class="btn btn-success btn-lg btn-block pad">Added</button>
+    </div>
+    {% endif %}
+    <form action="/add" method="post">
+        <div class="mb-3">
+            <div class="mb-3">
+                <input autocomplete="off" autofocus class="form-control mx-auto w-auto pad"  name="food" placeholder="Apple, chicken, carrots.." type="text">
+            </div>
+            <div class="mb-3">
+                <select name="categories" id="categories" class="form-select pad" aria-label="Default select example">
+                    <option selected disabled>Choose food categorie</option>
+                    <option value="1">American Indian/Alaska Native Foods</option>
+                    <option value="2">Baby Foods</option>
+                    <option value="3">Baked Products</option>
+                    <option value="4">Beef Products</option>
+                    <option value="5">Beverages</option>
+                    <option value="7">Breakfast Cereals</option>
+                    <option value="8">Cereal Grains and Pasta</option>
+                    <option value="9">Fast Foods</option>
+                    <option value="10">Fats and Oils</option>
+                    <option value="11">Finfish and Shellfish Products</option>
+                    <option value="12">Fruits and Fruit Juices</option>
+                    <option value="13">Lamb, Veal, and Game Products</option>
+                    <option value="14">Legumes and Legume Products</option>
+                    <option value="15">Meals, Entrees, and Side Dishes</option>
+                    <option value="16">Nut and Seed Products</option>
+                    <option value="17">Pork Products</option>
+                    <option value="18">Poultry Products</option>
+                    <option value="19">Restaurant Foods</option>
+                    <option value="20">Sausages and Luncheon Meats</option>
+                    <option value="21">Snacks</option>
+                    <option value="22">Soups, Sausages, and Gravies</option>
+                    <option value="23">Spices and Herbs</option>
+                    <option value="24">Sweets</option>
+                    <option value="25">Vegetables and Vegetable Products</option>
+                </select>
+            </div>
+        <button class="btn btn-primary pad" type="submit">Search for food</button>
+    </form>
+{% endblock %}

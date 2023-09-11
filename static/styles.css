@@ -25,3 +25,12 @@ nav .navbar-brand .green
     margin-left: auto;
     margin-right: auto;
   }
+
+.pad {
+    padding : 10px;
+}
+#categories{
+    width : 50%;
+    margin-left: auto;
+    margin-right: auto;
+}

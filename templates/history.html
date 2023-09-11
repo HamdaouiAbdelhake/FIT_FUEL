@@ -18,11 +18,11 @@
         <tbody>
             {% for stock in transactions %}
                 <tr>
-                    <th>{{ stock["type"] }}</th>
+                    <th>{{ stock["Energy"] }}</th>
                     <th>{{ stock["name"] }}</th>
-                    <th>{{ stock["price"] }}</th>
-                    <th>{{ stock["number"] }}</th>
-                    <th>{{ stock["time"] }}</th>
+                    <th>{{ stock["Protein"] }}</th>
+                    <th>{{ stock["Total lipid (fat)"] }}</th>
+                    <th>{{ stock["Carbohydrate, by difference"] }}</th>
                 </tr>
             {% endfor %}
         </tbody>

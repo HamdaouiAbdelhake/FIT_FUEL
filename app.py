@@ -1,18 +1,16 @@
 import os
+import csv
 
 from cs50 import SQL
-from datetime import datetime
-from flask import Flask, flash, redirect, render_template, request, session
+from flask import Flask, flash, redirect, render_template, send_file, request, session
 from flask_session import Session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from helpers import apology, login_required, lookup, usd
+from helpers import apology, login_required, lookup
 
 # Configure application
 app = Flask(__name__)
 
-# Custom filter
-app.jinja_env.filters["usd"] = usd
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
@@ -20,8 +18,7 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 # Configure CS50 Library to use SQLite database
-db = SQL("sqlite:///finance.db")
-
+db = SQL("sqlite:///food.db")
 
 @app.after_request
 def after_request(response):
@@ -35,93 +32,84 @@ def after_request(response):
 @app.route("/")
 @login_required
 def index():
-    """Show portfolio of stocks"""
-    owned = db.execute(
-        "SELECT stock,number FROM owned WHERE user_id = ?", session["user_id"]
-    )
-    total = 0
-    for stock in owned:
-        stock["price"] = lookup(stock["stock"])["price"]
-        stock["value"] = stock["price"] * stock["number"]
-        total += stock["value"]
-        stock["value"] = usd(stock["price"] * stock["number"])
-    cash = db.execute("SELECT cash FROM users WHERE id=?", session["user_id"])
-    total += cash[0]["cash"]
-    total = usd(total)
-    return render_template(
-        "index.html", owned=owned, cash=usd(cash[0]["cash"]), total=total
-    )
+    """Show history of transactions"""
+    return render_template("index.html")
 
 
-@app.route("/buy", methods=["GET", "POST"])
+
+@app.route("/today")
 @login_required
-def buy():
+def today():
+    foods = db.execute("SELECT * FROM food WHERE user_id = ?",session["user_id"])
+    summ = [0,0,0,0]
+    for food in foods:
+        summ[0] += float(food["energy"])
+        summ[1] += float(food["protein"])
+        summ[2] += float(food["fat"])
+        summ[3] += float(food["carbs"])
+    for i in range(4):
+        summ[i] = "{:.2f}".format(summ[i])
+    return render_template("today.html",foods = foods, summ = summ)
+
+
+@app.route("/add", methods=["GET", "POST"])
+@login_required
+def add():
     """Buy shares of stock"""
     if request.method == "POST":
-        if not request.form.get("symbol"):
-            return apology("must provide a stock", 400)
-        elif not lookup(request.form.get("symbol")):
-            return apology("no such stock", 400)
-        elif not request.form.get("shares"):
-            return apology("How many bro", 400)
-        elif not request.form.get("shares").isnumeric():
-            return apology("must enter a number", 400)
-        elif int(request.form.get("shares")) <= 0:
-            return apology("must buy at least one", 400)
-        stock = request.form.get("symbol")
-        price = lookup(request.form.get("symbol"))["price"] * int(
-            request.form.get("shares")
-        )
-        rows = db.execute("SELECT cash from users WHERE id = ?", session["user_id"])
-        if price > rows[0]["cash"]:
-            return apology("not enough funds", 400)
-        else:
-            cash = rows[0]["cash"] - price
-            db.execute(
-                "UPDATE users SET cash = ? WHERE id = ?", cash, session["user_id"]
-            )
-            data = db.execute(
-                "SELECT number FROM owned WHERE user_id = ? AND stock = ?",
-                session["user_id"],
-                request.form.get("symbol"),
-            )
-            if data:
-                db.execute(
-                    "UPDATE owned SET number = ? WHERE user_id = ? AND stock = ?",
-                    data[0]["number"] + int(request.form.get("shares")),
-                    session["user_id"],
-                    request.form.get("symbol"),
-                )
-            else:
-                db.execute(
-                    "INSERT INTO owned (user_id,stock,number) VALUES (?,?,?)",
-                    session["user_id"],
-                    request.form.get("symbol"),
-                    int(request.form.get("shares")),
-                )
-            now = datetime.now()
-            date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
-            db.execute(
-                "INSERT INTO transactions (user_id,type,name,price,time,number) VALUES (?,'Bought',?,?,?,?)",
-                session["user_id"],
-                request.form.get("symbol"),
-                lookup(request.form.get("symbol"))["price"],
-                date_time,
-                int(request.form.get("shares")),
-            )
-            return redirect("/")
+        if not request.form.get("food"):
+            return apology("must provide a food name", 400)
+        elif not request.form.get("categories"):
+            return apology("What type of food", 400)
+        elif not lookup(request.form.get("food"), int(request.form.get("categories"))):
+            return apology("food not found", 400)
+        category = int(request.form.get("categories"))
+        query = request.form.get("food")
+        foods = lookup(request.form.get("food"),category)
+        return render_template("looked.html",foods = foods)
     else:
-        return render_template("buy.html")
+        return render_template("add.html",show = False)
 
 
-@app.route("/history")
+@app.route("/tolist")
 @login_required
-def history():
-    """Show history of transactions"""
-    transactions = db.execute(
-        "SELECT * FROM transactions WHERE user_id = ?", session["user_id"]
-    )
-    return render_template("history.html", transactions=transactions)
+def add_to_list():
+    food = request.args["add_button"]
+    food = list(food.split("/"))
+    db.execute("INSERT INTO food(id,user_id,description,energy,protein,fat,carbs) VALUES(?,?,?,?,?,?,?)",food[0],session["user_id"],food[1],food[2],food[3],food[4],food[5])
+    return render_template("add.html",show = True)
+
+
+@app.route("/download")
+@login_required
+def download():
+    table = db.execute("SELECT description,energy,protein,fat,carbs FROM food WHERE user_id = ?",session["user_id"])
+    fields = ["description","energy",'protein',"fat","carbs"]
+    summ = {"energy" : 0 ,"protein" : 0 , "fat" : 0 , "carbs" : 0 , "description" : "sum"}
+    for food in table:
+        summ["energy"] += float(food["energy"])
+        summ["protein"] += float(food["protein"])
+        summ["fat"] += float(food["fat"])
+        summ["carbs"] += float(food["carbs"])
+    with open("output.csv", "w", newline="") as csvfile:
+        # Create a CSV writer using the field/column names
+        writer = csv.DictWriter(csvfile, fieldnames=fields)
+
+        # Write the header row (column names)
+        writer.writeheader()
+        # Write the data
+        for row in table:
+            writer.writerow(row)
+        writer.writerow(summ)
+    path = "output.csv"
+    return send_file(path,as_attachment=True)
+
+
+@app.route("/reset")
+@login_required
+def reset():
+    db.execute("DELETE FROM food WHERE user_id = ?",session["user_id"])
+    return redirect("/today")
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -173,24 +161,6 @@ def logout():
     # Redirect user to login form
     return redirect("/")
 
-
-@app.route("/quote", methods=["GET", "POST"])
-@login_required
-def quote():
-    """Get stock quote."""
-    if request.method == "POST":
-        if not request.form.get("symbol"):
-            return apology("must provide a stock symbol", 400)
-        if lookup(request.form.get("symbol")):
-            stock = lookup(request.form.get("symbol"))
-            stock["price"] = usd(stock["price"])
-            return render_template("quoted.html", stock=stock)
-        else:
-            return apology("No such stock symbol", 400)
-    else:
-        return render_template("quote.html")
-
-
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """Register user"""
@@ -222,84 +192,3 @@ def register():
         return redirect("/")
     else:
         return render_template("register.html")
-
-
-@app.route("/sell", methods=["GET", "POST"])
-@login_required
-def sell():
-    """Sell shares of stock"""
-    owned = db.execute(
-        "SELECT stock,number FROM owned WHERE user_id = ?", session["user_id"]
-    )
-    cash = db.execute("SELECT cash FROM users WHERE id=?", session["user_id"])[0][
-        "cash"
-    ]
-    if request.method == "POST":
-        if not request.form.get("symbol"):
-            return apology("must choose a stock", 400)
-        elif not request.form.get("shares"):
-            return apology("must enter a number", 400)
-        elif not request.form.get("shares").isnumeric():
-            return apology("must enter a number", 400)
-        elif int(request.form.get("shares")) <= 0:
-            return apology("must enter a positive number", 400)
-        for stock in owned:
-            if stock["stock"] == request.form.get("symbol"):
-                if stock["number"] == 0:
-                    return apology("you don't have it", 400)
-                elif stock["number"] < int(request.form.get("shares")):
-                    return apology("you don't have enough", 400)
-                elif stock["number"] == int(request.form.get("shares")):
-                    now = datetime.now()
-                    date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
-                    db.execute(
-                        "DELETE FROM owned WHERE user_id = ? and stock = ?",
-                        session["user_id"],
-                        stock["stock"],
-                    )
-                    cash += (
-                        int(request.form.get("shares"))
-                        * lookup(request.form.get("symbol"))["price"]
-                    )
-                    db.execute(
-                        "UPDATE users SET cash = ? WHERE id = ?",
-                        cash,
-                        session["user_id"],
-                    )
-                    db.execute(
-                        "INSERT INTO transactions (user_id,type,name,price,time,number) VALUES (?,'Sold',?,?,?,?)",
-                        session["user_id"],
-                        request.form.get("symbol"),
-                        lookup(request.form.get("symbol"))["price"],
-                        date_time,
-                        int(request.form.get("shares")),
-                    )
-                else:
-                    now = datetime.now()
-                    date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
-                    cash += (
-                        int(request.form.get("shares"))
-                        * lookup(request.form.get("symbol"))["price"]
-                    )
-                    db.execute(
-                        "UPDATE users SET cash = ? WHERE id = ?",
-                        cash,
-                        session["user_id"],
-                    )
-                    db.execute(
-                        "INSERT INTO transactions (user_id,type,name,price,time,number) VALUES (?,'Sold',?,?,?,?)",
-                        session["user_id"],
-                        request.form.get("symbol"),
-                        lookup(request.form.get("symbol"))["price"],
-                        date_time,
-                        int(request.form.get("shares")),
-                    )
-                    db.execute(
-                        "UPDATE owned SET number = ? WHERE user_id = ? and stock = ?",
-                        stock["number"] - int(request.form.get("shares")),
-                        session["user_id"],
-                        stock["stock"],
-                    )
-        return redirect("/")
-    else:
-        return render_template("sell.html", owned=owned)
